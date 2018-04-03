@@ -1,5 +1,6 @@
 import tweepy
 import json
+import dstk
 
 #uses Youtube APIs to gather channel information 
 def get_channel_info()
