@@ -1,9 +1,7 @@
 import secrets
 import json
-import dstk
 import requests
 
-<<<<<<< HEAD
 CACHE_FNAME="Youtube_Cache.json"
 
 try:
@@ -29,14 +27,6 @@ def make_request_using_cache(baseurl, params):
     if unique_ident in CACHE_DICTION:
         print("Getting cached data...")
         return CACHE_DICTION[unique_ident]
-=======
-#uses Youtube APIs to gather channel information 
-def get_channel_info():
-    base_url='https://www.googleapis.com/youtube/v3/search'
-    data=requests.get(base_url,params)
-    
-    
->>>>>>> 36fcae0ead14747ceb1f1a862885db43dadb5d91
 
     ## if not, fetch the data afresh, add it to the cache,
     ## then write the cache to file
@@ -56,51 +46,44 @@ def get_channel_info():
 YoutubeAPI=secrets.YOUTUBE_API_KEY
 #uses Youtube APIs to gather channel information 
 def get_channel_info(query):
-	base_url='https://www.googleapis.com/youtube/v3/search'
-	params={'part':'snippet','q':query,'type':'channel','key':YoutubeAPI}
-	tube_data=requests.get(base_url,params)
-	data=json.loads(tube_data.text)
-	print(json.dumps(data,indent=2))
+    base_url='https://www.googleapis.com/youtube/v3/search'
+    params={'part':'snippet','q':query,'type':'channel','key':YoutubeAPI}
+    tube_data=requests.get(base_url,params)
+    data=json.loads(tube_data.text)
+    print(json.dumps(data,indent=2))
 #gets current subscriber count of channel
 def get_current_subcribers():
-<<<<<<< HEAD
-	pass
+    pass
 
 #scrapes Scoial Blade for subs gained over a period of time
 def get_timed_subs():
-	pass
+    pass
 
 #gets revenue over a period of time
 def get_timed_rev():
-	pass
+    pass
 
 #gets tweets and gives sentiment analysis 
 def get_tweet_senti():
-	pass
+    pass
 
 #gets tweets for youtuber mentioned
 def get_tweets():
-	pass
+    pass
 
+#scrapes Scoial Blade for subs gained over a period of time
+def get_timed_subs():
+    pass
+
+#gets revenue over a period of time
+def get_timed_rev():
+    pass
+
+#gets tweets and gives sentiment analysis 
+def get_tweet_senti():
+    pass
+
+#gets tweets for youtuber mentioned
+def get_tweets():
+    pass
 get_channel_info('Philip Defranco')
-=======
-    pass
-
-#scrapes Scoial Blade for subs gained over a period of time
-def get_timed_subs():
-    pass
-
-#gets revenue over a period of time
-def get_timed_rev():
-    pass
-
-#gets tweets and gives sentiment analysis 
-def get_tweet_senti():
-    pass
-
-#gets tweets for youtuber mentioned
-def get_tweets():
-    pass
->>>>>>> 36fcae0ead14747ceb1f1a862885db43dadb5d91
-
-
