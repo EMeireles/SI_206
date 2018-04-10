@@ -12,6 +12,13 @@ try:
 except:
     CACHE_DICTION = {}
 
+#class YoutubeChannel(object):
+#    """docstring for YoutubeChannel"""
+#    def __init__(self, arg):
+#        super(YoutubeChannel, self).__init__()
+#        self.arg = arg
+        
+
 
 def params_unique_combination(baseurl, params):
     alphabetized_keys = sorted(params.keys())
@@ -50,14 +57,18 @@ def get_channel_info(query):
     params={'part':'snippet','q':query,'type':'channel','key':YoutubeAPI}
     tube_data=requests.get(base_url,params)
     data=json.loads(tube_data.text)
-    print(json.dumps(data,indent=2))
+    return data
 #gets current subscriber count of channel
-def get_current_subcribers():
-    pass
+def get_current_subcribers(id_):
+    base_url='https://www.googleapis.com/youtube/v3/channels'
+    params={'id':id_,'part':'statistics','key':YoutubeAPI}
+    tube_data=requests.get(base_url,params)
+    data=json.loads(tube_data.text)
+    print(json.dumps(data,indent=2))
 
 #scrapes Scoial Blade for subs gained over a period of time
-def get_timed_subs():
-    pass
+def get_timed_subs(channel):
+    baseurl='https://socialblade.com/youtube/search/'
 
 #gets revenue over a period of time
 def get_timed_rev():
@@ -86,4 +97,5 @@ def get_tweet_senti():
 #gets tweets for youtuber mentioned
 def get_tweets():
     pass
-get_channel_info('Philip Defranco')
+#get_channel_info('Philip Defranco')
+get_current_subcribers('UClFSU9_bUb4Rc6OYfTt5SPw')
