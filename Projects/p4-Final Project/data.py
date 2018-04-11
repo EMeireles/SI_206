@@ -81,9 +81,23 @@ def get_social(channel):
     summary_list=[]
     for item in summary.find_all('p'):
         summary_list.append(item.text.strip())
-    print(summary_list)
-        
-
+    #Scrapes for the subscriber data and revenue data
+    detailed_url=page_soup.find('div',id='YouTubeUserMenu')
+    nav_list=detailed_url.find_all('a')
+    detailed_soup=requests.get(dig_url+nav_list[2]['href'])
+    sub_soup=BeautifulSoup(detailed_soup.text,'html.parser')
+    sub_data=sub_soup.find_all('div',style='width: 860px; height: 32px; line-height: 32px; background: #f8f8f8;; padding: 0px 20px; color:#444; font-size: 9pt; border-bottom: 1px solid #eee;')
+    stat_list=[]
+    for item in sub_data:
+        stat_list.append(item.text.strip())
+    c_stat_list=[]
+    for item in stat_list:
+        clean=item.split('\n')
+        data_tup=(clean[0],clean[2],clean[4],clean[5],clean[8],clean[9],clean[12])
+        c_stat_list.append(data_tup)
+    stat_list=c_stat_list
+    print(stat_list)
+    
 
 #gets revenue over a period of time
 def get_timed_rev():
