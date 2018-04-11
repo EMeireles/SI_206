@@ -1,7 +1,7 @@
 import secrets
 import json
 import requests
-
+from bs4 import BeautifulSoup
 CACHE_FNAME="Youtube_Cache.json"
 
 try:
@@ -50,7 +50,7 @@ def make_request_using_cache(baseurl, params):
 
 
 
-YoutubeAPI=secrets.YOUTUBE_API_KEY
+YoutubeAPI=secrets.API_KEY_YOUTUBE
 #uses Youtube APIs to gather channel information 
 def get_channel_info(query):
     base_url='https://www.googleapis.com/youtube/v3/search'
@@ -69,6 +69,10 @@ def get_current_subcribers(id_):
 #scrapes Scoial Blade for subs gained over a period of time
 def get_timed_subs(channel):
     baseurl='https://socialblade.com/youtube/search/{}'.format(channel)
+    data=requests.get(baseurl)
+    soup=BeautifulSoup(data,'html.parser')
+    print(soup)
+    
 
 
 #gets revenue over a period of time
@@ -83,20 +87,5 @@ def get_tweet_senti():
 def get_tweets():
     pass
 
-#scrapes Scoial Blade for subs gained over a period of time
-def get_timed_subs():
-    pass
-
-#gets revenue over a period of time
-def get_timed_rev():
-    pass
-
-#gets tweets and gives sentiment analysis 
-def get_tweet_senti():
-    pass
-
-#gets tweets for youtuber mentioned
-def get_tweets():
-    pass
 #get_channel_info('Philip Defranco')
-get_current_subcribers('UClFSU9_bUb4Rc6OYfTt5SPw')
+get_timed_subs('KSI')
