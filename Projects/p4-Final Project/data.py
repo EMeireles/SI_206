@@ -68,7 +68,8 @@ def get_current_subcribers(id_):
 
 #scrapes Scoial Blade for subs gained over a period of time
 def get_timed_subs(channel):
-    baseurl='https://socialblade.com/youtube/search/'
+    baseurl='https://socialblade.com/youtube/search/{}'.format(channel)
+
 
 #gets revenue over a period of time
 def get_timed_rev():
