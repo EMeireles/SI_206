@@ -50,7 +50,7 @@ def make_request_using_cache(baseurl, params):
 
 
 
-YoutubeAPI=secrets.API_KEY_YOUTUBE
+YoutubeAPI=secrets.YOUTUBE_API_KEY
 #uses Youtube APIs to gather channel information 
 def get_channel_info(query):
     base_url='https://www.googleapis.com/youtube/v3/search'
@@ -67,12 +67,22 @@ def get_current_subcribers(id_):
     print(json.dumps(data,indent=2))
 
 #scrapes Scoial Blade for subs gained over a period of time
-def get_timed_subs(channel):
+def get_social(channel):
     baseurl='https://socialblade.com/youtube/search/{}'.format(channel)
+    dig_url='https://socialblade.com'
     data=requests.get(baseurl)
-    soup=BeautifulSoup(data,'html.parser')
-    print(soup)
-    
+    soup=BeautifulSoup(data.text,'html.parser')
+    boxes=soup.find_all('div', style='width: 1200px; height: 88px; background: #fff; padding: 15px 30px; margin: 2px auto; border-bottom: 2px solid #e4e4e4;')
+    link=list(boxes[0].find('h2').children)[0]['href']
+    #Gets Sumamry Data of of Social Balde
+    new_page=requests.get(dig_url+link)
+    page_soup=BeautifulSoup(new_page.text,'html.parser')
+    summary=page_soup.find('div',style='width: 1200px; height: 250px; padding: 30px;')
+    summary_list=[]
+    for item in summary.find_all('p'):
+        summary_list.append(item.text.strip())
+    print(summary_list)
+        
 
 
 #gets revenue over a period of time
@@ -88,4 +98,4 @@ def get_tweets():
     pass
 
 #get_channel_info('Philip Defranco')
-get_timed_subs('KSI')
+get_social('KSI')
