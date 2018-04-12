@@ -4,6 +4,10 @@ import tweepy
 import sqlite3
 import requests
 from bs4 import BeautifulSoup
+import nltk
+from nltk.corpus import stopwords
+stop_words = set(stopwords.words('english'))
+from nltk.tokenize import word_tokenize
 CACHE_FNAME="Youtube_Cache.json"
 db_name='YoutubeTweets.db'
 
@@ -161,21 +165,51 @@ def insert_tweet_data(tweets):
             empty="No Location"
         else:
             empty=tweet.user.location
-        insertion = (tweet.id, tweet.text.encode('utf8'), tweet.retweet_count, tweet.user.id,tweet.user.screen_name,empty,tweet.user.followers_count)
+
+        insertion = (tweet.id, tweet.text, tweet.retweet_count, tweet.user.id,tweet.user.screen_name,empty,tweet.user.followers_count)
         statement = 'INSERT INTO "Tweets" '
         statement += 'VALUES (?, ?, ?, ?, ?, ?, ?)'
         cur.execute(statement, insertion)
+
+    conn.commit()
+
+    statement='''
+    SELECT TweetText FROM Tweets
+    '''
+    cur.execute(statement)
     
+    return cur.fetchall()
 
     #Close database connection
-    conn.commit()
-    conn.close()
+    
 #gets tweets and gives sentiment analysis 
-def get_tweet_senti():
-    pass
+def get_tweet_senti(col):
+    conn=sqlite3.connect(db_name)
+    cur=conn.cursor()
+
+    common_tweets=["https","http","RT"]
+    letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    tweets=[]
+    for tup in col:
+        tweets.append(tup[0])
+
+
+    filtered_tweets=[]
+    for strng in tweets:
+        word_tokens=word_tokenize(strng)
+        if word_tokens[0] not in common_tweets:
+            filtered_tweets.append(strng)
+
+
+    
 
 
 
-tweets=get_tweets('Phillip Defranco',30)
+
 init_db(db_name)
-insert_tweet_data(tweets)
+tweets=get_tweets('Phillip Defranco',50)
+analyze=insert_tweet_data(tweets)
+more=get_tweet_senti(analyze)
+for tweet in more:
+    print(tweet)
+
