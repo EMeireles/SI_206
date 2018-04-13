@@ -200,16 +200,39 @@ def get_tweet_senti(col):
         if word_tokens[0] not in common_tweets:
             filtered_tweets.append(strng)
 
+    base_url='https://api.aylien.com/api/v1/sentiment'
+    params={'mode':'tweet','text':s_text,'language':'en'}
+    headers_aylien={'X-AYLIEN-TextAPI-Application-ID':secrets.SENTI_ID,'X-AYLIEN-TextAPI-Application-Key':secrets.SENTI_KEY}
+    data=requests.get(base_url,params=params,headers=headers)
 
-    
+    base_u='https://eastus.api.cognitive.microsoft.com/text/analytics/v2.0/'+'sentiment'
+    headers={
+        'Ocp-Apim-Subscription-Key':secrets.MICRO_KEY,
+        'Content-Type':'application/json',
+        'Accept':'application/json'
+    }
+    documents= {'documents' : [
+      {'id': '1', 'language': 'en', 'text': 'I had a wonderful experience! The rooms were wonderful and the staff was helpful.'},
+    ]}
+    data=requests.post(base_u,headers=headers,json=documents)
+    print(data.text)
 
 
 
 
-init_db(db_name)
-tweets=get_tweets('Phillip Defranco',50)
-analyze=insert_tweet_data(tweets)
-more=get_tweet_senti(analyze)
-for tweet in more:
-    print(tweet)
+   
+
+
+
+
+
+#init_db(db_name)
+#tweets=get_tweets('Phillip Defranco',50)
+#analyze=insert_tweet_data(tweets)
+#print(get_tweet_senti(analyze))
+
+
+
+
+
 
