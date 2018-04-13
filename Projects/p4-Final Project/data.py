@@ -68,6 +68,44 @@ def get_current_subcribers(id_):
     tube_data=make_request_using_cache(base_url,params)
     return tube_data
 
+def get_comments(query):
+    base_Azure='https://eastus.api.cognitive.microsoft.com/text/analytics/v2.0/'+'sentiment'
+    headers_Azure={
+        'Ocp-Apim-Subscription-Key':secrets.MICRO_KEY,
+        'Content-Type':'application/json',
+        'Accept':'application/json'
+    }
+    base_url='https://www.googleapis.com/youtube/v3/search'
+    params={'part':'snippet','q':query,'type':'video','key':YoutubeAPI,'maxResults':'25'}
+    tube_data=make_request_using_cache(base_url,params)
+    v_ids=[]
+    for dic in tube_data['items']:
+        v_ids.append(dic['id']['videoId'])
+
+    base_comments='https://www.googleapis.com/youtube/v3/commentThreads'
+    params_comments={'videoId':'Vgd9mAHjcuo','part':'snippet','key':YoutubeAPI,'maxResults':'100'}
+    comment_data=make_request_using_cache(base_comments,params_comments)
+
+    text_list=[]
+    for dic in comment_data['items']:
+        text_list.append(dic['snippet']['topLevelComment']['snippet']['textDisplay'])
+
+    text_obj=[]
+
+    for comment in text_list:
+        documents= {'documents' : [ {'id': '1', 'language': 'en', 'text':comment}]}
+        data_Azure=requests.post(base_Azure,headers=headers_Azure,json=documents)
+        rating_data=json.loads(data_Azure.text)
+        rating=rating_data['documents'][0]['score']
+        text_obj.append((comment,rating))
+
+    return text_obj
+
+    
+
+
+
+
 #scrapes Scoial Blade for all the data
 def get_social(channel):
     baseurl='https://socialblade.com/youtube/search/{}'.format(channel)
@@ -216,11 +254,3 @@ def get_tweet_senti(col):
         tweet_object.append((text,rating))
 
     return tweet_object
-
-
-
-
-
-
-
-
