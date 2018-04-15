@@ -34,11 +34,9 @@ def make_request_using_cache(baseurl, params=''):
         unique_ident=baseurl
 
     if unique_ident in CACHE_DICTION:
-        print("Getting cached data...")
         return CACHE_DICTION[unique_ident]
 
     else:
-        print("Making a request for new data...")
         # Make the request and cache the new data
         if params !='':
             resp = requests.get(baseurl, params)
@@ -53,20 +51,24 @@ def make_request_using_cache(baseurl, params=''):
         return CACHE_DICTION[unique_ident]
 
 
-
 YoutubeAPI=secrets.YOUTUBE_API_KEY
 #uses Youtube APIs to gather channel information 
 def get_channel_info(query):
     base_url='https://www.googleapis.com/youtube/v3/search'
     params={'part':'snippet','q':query,'type':'channel','key':YoutubeAPI}
     tube_data=make_request_using_cache(base_url,params)
-    return tube_data
+    tubers=[(dic['id']['channelId'],dic['snippet']['channelTitle'])for dic in tube_data['items']]
+    return tubers
+    
+
+    
+    
 #gets current subscriber count of channel
 def get_current_subcribers(id_):
     base_url='https://www.googleapis.com/youtube/v3/channels'
     params={'id':id_,'part':'statistics','key':YoutubeAPI}
     tube_data=make_request_using_cache(base_url,params)
-    return tube_data
+    return (tube_data['items'][0]['statistics']['subscriberCount'],tube_data['items'][0]['statistics']['viewCount'])
 
 def get_comments(query):
     base_Azure='https://eastus.api.cognitive.microsoft.com/text/analytics/v2.0/'+'sentiment'
@@ -100,10 +102,6 @@ def get_comments(query):
         text_obj.append((comment,rating))
 
     return text_obj
-
-    
-
-
 
 
 #scrapes Scoial Blade for all the data
