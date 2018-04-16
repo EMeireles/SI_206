@@ -19,6 +19,52 @@ try:
 except:
     CACHE_DICTION = {}
 
+def init_db(db_name):
+    #code to create a new database goes here
+    #handle exception if connection fails by printing the error
+    try:
+        conn = sqlite3.connect(db_name)
+    except Error as e:
+        print(e)    
+
+    statement = '''
+    DROP TABLE IF EXISTS 'Youtubers';
+    '''
+    cur.execute(statement)
+    conn.commit()
+
+
+    create_cur=conn.cursor()
+    statement= '''
+    CREATE TABLE "Youtubers"(
+    'Id' INTEGER PRIMARY KEY AUTOINCREMENT,
+    'Youtuber' TEXT NOT NULL,
+    'TotalGrade' TEXT NOT NULL,
+    'SubscriberRank' INTEGER NOT NULL,
+    'VideoViewRank' INTEGER NOT NULL,
+    'SocialBladeRank' INTEGER NOT NULL,
+    'ViewsLastThirty' INTEGER NOT NULL,
+    'SubscribersLatThirty' INTEGER NOT NULL,
+    'EstimatedYearEarn' INTEGER NOT NULL
+    );
+     '''
+    create_cur.execute(statement)
+    conn.commit()
+
+    statement= '''
+    CREATE TABLE "YoutubeStats"(
+    'YoutuberId' INTEGER,
+    'Uploads' INTEGER NOT NULL,
+    'Subscribers' INTEGER NOT NULL,
+    'VideoViews' INTEGER NOT NULL,
+    'ChannelType' TEXT NOT NULL,
+    FOREIGN KEY (YoutiberId) REFERENCES Youtubers(Id)
+    );
+     '''
+    create_cur.execute(statement)
+    conn.commit()
+    conn.close()
+
 
 def params_unique_combination(baseurl, params):
     alphabetized_keys = sorted(params.keys())
@@ -52,23 +98,6 @@ def make_request_using_cache(baseurl, params=''):
 
 
 YoutubeAPI=secrets.YOUTUBE_API_KEY
-#uses Youtube APIs to gather channel information 
-def get_channel_info(query):
-    base_url='https://www.googleapis.com/youtube/v3/search'
-    params={'part':'snippet','q':query,'type':'channel','key':YoutubeAPI}
-    tube_data=make_request_using_cache(base_url,params)
-    tubers=[(dic['id']['channelId'],dic['snippet']['channelTitle'])for dic in tube_data['items']]
-    return tubers
-    
-
-    
-    
-#gets current subscriber count of channel
-def get_current_subcribers(id_):
-    base_url='https://www.googleapis.com/youtube/v3/channels'
-    params={'id':id_,'part':'statistics','key':YoutubeAPI}
-    tube_data=make_request_using_cache(base_url,params)
-    return (tube_data['items'][0]['statistics']['subscriberCount'],tube_data['items'][0]['statistics']['viewCount'])
 
 def get_comments(query):
     base_Azure='https://eastus.api.cognitive.microsoft.com/text/analytics/v2.0/'+'sentiment'
@@ -112,10 +141,17 @@ def get_social(channel):
     soup=BeautifulSoup(data,'html.parser')
     boxes=soup.find_all('div', style='width: 1200px; height: 88px; background: #fff; padding: 15px 30px; margin: 2px auto; border-bottom: 2px solid #e4e4e4;')
     link=list(boxes[0].find('h2').children)[0]['href']
+    
+
     #Gets Sumamry Data of of Social Balde
     new_page=make_request_using_cache(dig_url+link)
     page_soup=BeautifulSoup(new_page,'html.parser')
     summary=page_soup.find('div',style='width: 1200px; height: 250px; padding: 30px;')
+    top=page_soup.find('div',id='YouTubeUserTopInfoBlockTop')
+    name=top.find('h1').text.strip()
+    stats=top.find_all('span',style='font-weight: bold;')
+    top_list=[item.text.strip() for item in stats]
+    top_list.append(name)
     summary_list=[]
     for item in summary.find_all('p'):
         summary_list.append(item.text.strip())
@@ -144,39 +180,26 @@ def get_social(channel):
     future_list=[]
     for item in lv2_soup:
         future_list.append(item.text.strip())
+    print(top_list)
+    #return(summary_list,stat_list,future_list)
 
-    return(summary_list,stat_list,future_list)
+def pop_table(summary,toplist):
+    youtube_tup=[]
+    youtube_tup.append(summary[0])
+    youtube_tup.append(summary[2][:-2])
+    youtube_tup.append(summary[4][:-2])
+    youtube_tup.append(summary[6][:-2])
+    youtube_tup.append(summary[8].split('\n')[0])
+    youtube_tup.append(summary[9].split('\n')[0])
+    youtube_tup.append(summary[12].split('-')[1][:-1])
+    insertion = (None,top_list[-1],youtube_tup[0],youtube_tup[1],youtube_tup[2],youtube_tup[3],youtube_tup[5],youtube_tup[6])
+    statement = 'INSERT INTO "Youtubers" '
+    statement += 'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
+    cur.execute(statement, insertion)
+    
+    
 
-def init_db(db_name):
-    #code to create a new database goes here
-    #handle exception if connection fails by printing the error
-    try:
-        conn = sqlite3.connect(db_name)
-    except Error as e:
-        print(e)    
 
-    statement = '''
-    DROP TABLE IF EXISTS 'Tweets';
-    '''
-    cur=conn.cursor()
-    cur.execute(statement)
-    conn.commit()
-
-    create_cur=conn.cursor()
-    statement= '''
-    CREATE TABLE "Tweets"(
-    'TweetId' INTEGER PRIMARY KEY,
-    'TweetText' TEXT NOT NULL,
-    'RetweetCount' INTEGER NOT NULL,
-    'UserId' TEXT NOT NULL,
-    'ScreenName' TEXT NOT NULL,
-    'Location' TEXT NOT NULL,
-    'FollowerCount' INTEGER NOT NULL
-    );
-     '''
-    create_cur.execute(statement)
-    conn.commit()
-    conn.close()
 
 consumer_key=secrets.TWITTER_API_KEY
 consumer_secret=secrets.TWITTER_API_SECRET
@@ -252,3 +275,7 @@ def get_tweet_senti(col):
         tweet_object.append((text,rating))
 
     return tweet_object
+
+test=get_social('')
+
+print(test)
