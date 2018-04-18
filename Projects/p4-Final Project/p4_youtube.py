@@ -13,20 +13,14 @@ def sort(logic):
 
     if logic[0].lower()=='bar':
         if logic[1].lower()=='totalsubs':
-            ipt='a'
-            tubers=[]
-            while(ipt!='done'):
-                ipt=input("Enter Youtuber: ")
-                tubers.append(ipt)
-
-            search_list=[(data.get_channel_info(yt)[0],data.get_channel_info(yt)[1]) for yt in tubers[:-1]]
-            subs=[(data.get_current_subcribers(tup[0]),tup[1]) for tup in search_list]
+            dat=data.get_data('subs')
+            print(dat)
             traces = []
-            for items in subs:
+            for item in dat:
                 trace= go.Bar(
                     x=['Subscriber Total'],
-                    y=[items[0][0]],
-                    name=items[1][1]
+                    y=[item[1]],
+                    name=items[0]
                 )
                 traces.append(trace)
             layout = go.Layout(
@@ -46,22 +40,15 @@ def sort(logic):
                 ])
             return app_bar.layout
         if logic[1].lower()=='totalviews':
-            ipt='a'
-            tubers=[]
-            while(ipt!='done'):
-                ipt=input("Enter Youtuber: ")
-                tubers.append(ipt)
-
-            search_list=[]
-            subs=[(data.get_current_subcribers(tup[0]),tup[1]) for tup in search_list]
+            dat=data.get_data('views')
+            print(dat)
             traces = []
-            for items in subs:
+            for item in dat:
                 trace= go.Bar(
-                    x=['Views Total'],
-                    y=[items[0][1]],
-                    name=items[1][1]
+                    x=['Subscriber Total'],
+                    y=[item[1]],
+                    name=items[0]
                 )
-                
                 traces.append(trace)
             layout = go.Layout(
                 barmode='group'
@@ -71,7 +58,7 @@ def sort(logic):
                 html.H1(children='Youtube Analyzer'),
 
                 html.Div(children='''
-                    Views: Bar graph comparison of Youtuber Total Views.
+                    Subscribers: Bar graph comparison of Youtuber Total Subscribers
                 '''),
 
                 dcc.Graph(
@@ -80,21 +67,15 @@ def sort(logic):
                 ])
             return app_bar.layout
         if logic[1].lower()=='totalview30':
-            ipt='a'
-            tubers=[]
-            while(ipt!='done'):
-                ipt=input("Enter Youtuber: ")
-                tubers.append(ipt)
-            subs=[(data.get_social(yt)[0][8],yt) for yt in tubers[:-1]]
-            cleaned=[(item[0].split('\n')[0],item[1]) for item in subs]
+            dat=data.get_data('ViewsLastThirty')
+            print(dat)
             traces = []
-            for items in cleaned:
+            for item in dat:
                 trace= go.Bar(
-                    x=['Views Total in the last 30 days'],
-                    y=[items[0]],
-                    name=items[1]
+                    x=['Subscriber Total'],
+                    y=[item[1]],
+                    name=items[0]
                 )
-                
                 traces.append(trace)
             layout = go.Layout(
                 barmode='group'
@@ -104,7 +85,7 @@ def sort(logic):
                 html.H1(children='Youtube Analyzer'),
 
                 html.Div(children='''
-                    View Total in the last 30 days: Bar graph comparison of Youtuber views within the last 30 days.
+                    Subscribers: Bar graph comparison of Youtuber Total Subscribers
                 '''),
 
                 dcc.Graph(
@@ -113,21 +94,15 @@ def sort(logic):
                 ])
             return app_bar.layout
         if logic[1].lower()=='totalsubs30':
-            ipt='a'
-            tubers=[]
-            while(ipt!='done'):
-                ipt=input("Enter Youtuber: ")
-                tubers.append(ipt)
-            subs=[(data.get_social(yt)[0][7],yt) for yt in tubers[:-1]]
-            cleaned=[(item[0].split('\n')[0],item[1]) for item in subs]
+            dat=data.get_data('SubsLastThirty')
+            print(dat)
             traces = []
-            for items in cleaned:
+            for item in dat:
                 trace= go.Bar(
-                    x=['Subscribers in the last 30 days'],
-                    y=[items[0]],
-                    name=items[1]
+                    x=['Subscriber Total'],
+                    y=[item[1]],
+                    name=items[0]
                 )
-                
                 traces.append(trace)
             layout = go.Layout(
                 barmode='group'
@@ -137,7 +112,7 @@ def sort(logic):
                 html.H1(children='Youtube Analyzer'),
 
                 html.Div(children='''
-                    Subscribers in the last 30 days: Bar graph comparison of Youtuber Subscribers within the last 30 days.
+                    Subscribers: Bar graph comparison of Youtuber Total Subscribers
                 '''),
 
                 dcc.Graph(
@@ -147,7 +122,6 @@ def sort(logic):
             return app_bar.layout
 
     if logic[0].lower()=='box':
-
         if logic[1].lower()=='twitter':
             d=data.get_data('twitter')
             traces = []
@@ -170,6 +144,8 @@ def sort(logic):
                     figure=fig)
                 ])
             return app_box.layout
+    if logic[0].lower()=='line':
+        
 
 
             
