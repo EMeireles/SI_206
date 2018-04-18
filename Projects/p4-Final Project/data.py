@@ -17,6 +17,12 @@ resource_owner_secret = secrets.TWITTER_ACCESS_SECRET
 YoutubeAPI=secrets.YOUTUBE_API_KEY
 url = 'https://api.twitter.com/1.1/account/verify_credentials.json'
 oauth = OAuth1Session(client_key,client_secret=client_secret, resource_owner_key=resource_owner_key,resource_owner_secret=resource_owner_secret)
+base_Azure='https://eastus.api.cognitive.microsoft.com/text/analytics/v2.0/'+'sentiment'
+headers_Azure={
+    'Ocp-Apim-Subscription-Key':secrets.MICRO_KEY,
+    'Content-Type':'application/json',
+    'Accept':'application/json'
+}
 
 
 
@@ -53,6 +59,12 @@ def init_db(db_name):
     cur=conn.cursor()
     statement = '''
     DROP TABLE IF EXISTS 'Tweets';
+    '''
+    cur.execute(statement)
+
+    cur=conn.cursor()
+    statement = '''
+    DROP TABLE IF EXISTS 'Comments';
     '''
     cur.execute(statement)
     conn.commit()
@@ -93,9 +105,22 @@ def init_db(db_name):
     CREATE TABLE "Tweets"(
     'Id' INTEGER PRIMARY KEY AUTOINCREMENT,
     'Tweet' INTEGER,
-    'SetniScore' INTEGER NOT NULL,
     'Reference' INTEGER NOT NULL,
     'YoutuberReferencedId' INTEGER NOT NULL,
+    'SentiScore' REAL NOT NULL,
+    FOREIGN KEY (YoutuberReferencedId) REFERENCES Youtubers(Id)
+    );
+     '''
+    create_cur.execute(statement)
+    conn.commit()
+
+    statement= '''
+    CREATE TABLE "Comments"(
+    'Id' INTEGER PRIMARY KEY AUTOINCREMENT,
+    'Comment' INTEGER,
+    'Reference' INTEGER NOT NULL,
+    'YoutuberReferencedId' INTEGER NOT NULL,
+    'SentiScore' REAL NOT NULL,
     FOREIGN KEY (YoutuberReferencedId) REFERENCES Youtubers(Id)
     );
      '''
@@ -154,10 +179,12 @@ def get_comments(query):
     base_comments='https://www.googleapis.com/youtube/v3/commentThreads'
     params_comments={'videoId':'Vgd9mAHjcuo','part':'snippet','key':YoutubeAPI,'maxResults':'100'}
     comment_data=cache(base_comments,params_comments)
+    print('Check1')
 
     text_list=[]
     for dic in comment_data['items']:
         text_list.append(dic['snippet']['topLevelComment']['snippet']['textDisplay'])
+    print('check2')
 
     text_obj=[]
 
@@ -165,9 +192,11 @@ def get_comments(query):
         documents= {'documents' : [ {'id': '1', 'language': 'en', 'text':comment}]}
         data_Azure=requests.post(base_Azure,headers=headers_Azure,json=documents)
         rating_data=json.loads(data_Azure.text)
-        rating=rating_data['documents'][0]['score']
+        try:
+            rating=rating_data['documents'][0]['score']
+        except:
+            print(rating_data)
         text_obj.append((comment,rating))
-
     return text_obj
 
 
@@ -220,38 +249,12 @@ def get_social(channel):
         future_list.append(item.text.strip())
     return(summary_list,top_list,stat_list,future_list)
 
-def get_tweets(search_term):
-    protected_url ='https://api.twitter.com/1.1/search/tweets.json'
-    params={'q':search_term,'count':5}
-    data=cache(protected_url ,params=params,auth=oauth)
-    text=[]
-    for dic in data['statuses']:
-        text.append(dic['text'])
-    return (text,search_term)
-
-    
-    
-
-def get_tweet_senti(tweets,socialblade_name):
-    base_Azure='https://eastus.api.cognitive.microsoft.com/text/analytics/v2.0/'+'sentiment'
-    headers_Azure={
-        'Ocp-Apim-Subscription-Key':secrets.MICRO_KEY,
-        'Content-Type':'application/json',
-        'Accept':'application/json'
-    }
-    conn=sqlite3.connect(db_name)
-    cur=conn.cursor()
-
-
+def filter_tweets(tweets):
     common_tweets=["https","http","RT"]
     letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-    tweets_l=[]
-    for tup in tweets:
-        tweets.append(tup[0])
-
 
     filtered_tweets=[]
-    for strng in tweets_l:
+    for strng in tweets:
         word_tokens=word_tokenize(strng)
         if word_tokens[0] not in common_tweets:
             filtered_tweets.append(strng)
@@ -264,7 +267,18 @@ def get_tweet_senti(tweets,socialblade_name):
         rating=rating_data['documents'][0]['score']
         tweet_object.append((text,rating))
 
-    return (tweet_object,socialblade_name)
+    return tweet_object
+def get_tweets(search_term):
+    protected_url ='https://api.twitter.com/1.1/search/tweets.json'
+    params={'q':search_term,'count':30}
+    data=cache(protected_url ,params=params,auth=oauth)
+    text=[]
+    for dic in data['statuses']:
+        text.append(dic['text'])
+    f_text=filter_tweets(text)
+    return (f_text,search_term)
+
+
 
 def pop_table(channels):
     conn = sqlite3.connect(db_name)
@@ -292,20 +306,41 @@ def pop_table(channels):
         conn.commit()
 
     tweet_list=[]
-    for youtuber in channels:
-        tweet=get_tweets(youtuber)
+    for youtuber in social_list:
+        tweet=get_tweets(youtuber[1][-1])
+        tweet_list.append((tweet))
     
-
     for obj in tweet_list:
         for tweets in obj[0]:
             statement='''
             SELECT Id FROM Youtubers WHERE Youtubers.Youtuber= '''+"'{}'".format(obj[1])
             id_cur.execute(statement)
             Y_id=id_cur.fetchone()[0]
-            insertion=(None,tweets[0],tweets[1],obj[1],Y_id)
+            insertion=(None,tweets[0],obj[1],Y_id,tweets[1])
             statement = 'INSERT INTO "Tweets" '
             statement += 'VALUES (?, ?, ?, ?, ?)'
+            cur.execute(statement,insertion)
             conn.commit()
+
+    comment_list=[]
+    for youtuber in social_list:
+        print(youtuber[1][-1])
+        comments=get_comments(youtuber[1][-1])
+        comment_list.append((comments,youtuber[1][-1]))
+
+    #for comments in comment_list:
+    #    for comment in comments:
+    #        statement='''
+    #        SELECT Id FROM Youtubers WHERE Youtubers.Youtuber= ''' +"'{}'".format(obj[1])
+    #        id_cur.execute(statement)
+    #        Y_id=id_cur.fetchone()[0]
+    #        insertion=(None,comment[0],comments[1],Y_id,comment[1])
+    #        statement = 'INSERT INTO "Comments" '
+    #        statement += 'VALUES (?, ?, ?, ?, ?)'
+    #        cur.execute(statement,insertion)
+    #        conn.commit()
+
+
 
     conn.close()
 
@@ -342,6 +377,8 @@ def get_data(spec):
         return options
 
 
-yts=['nigahiga','Zerkaa','seananners']
-init_db(db_name)
-pop_table(yts)
+#yts=['nigahiga','Zerkaa','seananners']
+#init_db(db_name)
+#pop_table(yts)
+
+
