@@ -354,27 +354,44 @@ def get_data(spec):
         cur.execute(statement)
         options=cur.fetchall()
         return options
-    if spec=='views':
+    elif spec=='views':
         statement=='''
         SELECT Y.Youtuber,YS.VideoViews FROM Youtubers AS Y JOIN YoutubeStats AS YS ON Y.Id=YS.YoutuberId
         '''
         cur.execute(statement)
         options=cur.fetchall()
         return options
-    if spec=='ViewsLastThirty':
+    elif spec=='ViewsLastThirty':
         statement='''
         SELECT Y.Youtuber,Y.ViewsLastThirty FROM Youtubers AS Y 
         '''
         cur.execute(statement)
         options=cur.fetchall()
         return options
-    if spec=='SubsLastThirty':
+    elif spec=='SubsLastThirty':
         statement='''
         SELECT Y.Youtuber,Y.SubscribersLastThirty FROM Youtubers AS Y 
         '''
         cur.execute(statement)
         options=cur.fetchall()
         return options
+    elif spec=='twitter':
+        statement='''
+        SELECT DISTINCT Reference FROM Tweets
+        '''
+        cur.execute(statement)
+        lis=cur.fetchall()
+        data=[]
+        for yt in lis:
+            statement='''
+            SELECT Tweet,SentiScore FROM Tweets WHERE Reference=
+            '''+"'{}'".format(yt[0])
+            cur.execute(statement)
+            data_t=cur.fetchall()
+            data.append((data_t,yt[0]))
+        return data
+
+
 
 
 #yts=['nigahiga','Zerkaa','seananners']
