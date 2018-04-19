@@ -24,7 +24,18 @@ headers_Azure={
     'Content-Type':'application/json',
     'Accept':'application/json'
 }
-
+#Class to hold information for Text Based objects (Comments and Tweets)
+class Text:
+    def __init__(self,Text='',Sentiment=0.0,Reference=''):
+        self.Text=Text
+        self.Sentiment=Sentiment
+        self.Reference=Reference
+    def __str__(self):
+        return '''
+        Tweet: {}
+        Sentiment Score:{}
+        It references: {}
+        '''.format(self.Text,self.Sentiment,self.Reference)
 
 
 try:
@@ -192,7 +203,7 @@ def get_comments(query):
         data_Azure=requests.post(base_Azure,headers=headers_Azure,json=documents)
         rating_data=json.loads(data_Azure.text)
         rating=rating_data['documents'][0]['score']
-        text_obj.append((comment,rating))
+        text_obj.append(Text(Text=comment,Sentiment=rating,Reference=query))
     return text_obj
 
 
@@ -272,7 +283,8 @@ def get_tweets(search_term):
     for dic in data['statuses']:
         text.append(dic['text'])
     f_text=filter_tweets(text)
-    return (f_text,search_term)
+    tweet_objects=[Text(Text=item[0],Sentiment=item[1],Reference=search_term) for item in f_text]
+    return (tweet_objects)
 
 def pop_table(channels):
     conn = sqlite3.connect(db_name)
@@ -304,13 +316,13 @@ def pop_table(channels):
         tweet=get_tweets(youtuber[1][-1])
         tweet_list.append((tweet))
     
-    for obj in tweet_list:
-        for tweets in obj[0]:
+    for lis in tweet_list:
+        for tweets in lis:
             statement='''
-            SELECT Id FROM Youtubers WHERE Youtubers.Youtuber= '''+"'{}'".format(obj[1])
+            SELECT Id FROM Youtubers WHERE Youtubers.Youtuber= '''+"'{}'".format(tweets.Reference)
             id_cur.execute(statement)
             Y_id=id_cur.fetchone()[0]
-            insertion=(None,tweets[0],obj[1],Y_id,tweets[1])
+            insertion=(None,tweets.Text,tweets.Reference,Y_id,tweets.Sentiment)
             statement = 'INSERT INTO "Tweets" '
             statement += 'VALUES (?, ?, ?, ?, ?)'
             cur.execute(statement,insertion)
@@ -318,7 +330,7 @@ def pop_table(channels):
 
     comment_list=[]
     for youtuber in social_list:
-        print(youtuber[1][-1])
+        p
         comments=get_comments(youtuber[1][-1])
         comment_list.append((comments,youtuber[1][-1]))
         print("Cooling Down...")
@@ -326,14 +338,14 @@ def pop_table(channels):
     
 
     print("Filling Db...")
-    for comments in comment_list:
-        for comment in comments[0]:
+    for lis in comment_list:
+        for comments in lis:
             id_cur=conn.cursor()
             statement='''
-            SELECT Id FROM Youtubers WHERE Youtubers.Youtuber= ''' +"'{}'".format(comments[1])
+            SELECT Id FROM Youtubers WHERE Youtubers.Youtuber= ''' +"'{}'".format(comments.Reference)
             id_cur.execute(statement)
             Y_id=id_cur.fetchone()[0]
-            insertion=(None,comment[0],comments[1],Y_id,comment[1])
+            insertion=(None,comments.Text,comments.Reference,Y_id,comments.Sentiment)
             statement = 'INSERT INTO "Comments" '
             statement += 'VALUES (?, ?, ?, ?, ?)'
             cur.execute(statement,insertion)
@@ -404,3 +416,19 @@ def get_data(spec):
             data_t=cur.fetchall()
             data.append((data_t,yt[0]))
         return data
+
+def get_table_data():
+    statement='''
+    SELECT Y.Youtuber,Y.TotalGrade,Y.SubscriberRank,Y.VideoViewRank,Y.SocialBladeRank,Y.EstimatedYearEarn,YS.ChannelType 
+    FROM Youtubers AS Y 
+    JOIN YoutubeStats AS YS ON YS.YoutuberID==Y.Id
+    '''
+    conn = sqlite3.connect(db_name)
+    cur=conn.cursor()
+
+    cur.execute(statement)
+
+    table_data=cur.fetchall()
+    return table_data
+
+
