@@ -136,7 +136,7 @@ def sort(logic):
                 html.H1(children='Youtube Analyzer'),
 
                 html.Div(children='''
-                    Twitter: Bar graph comparison of Twitter Senitment Analysis
+                    Twitter: Box Plot comparison of Twitter Senitment Analysis
                 '''),
 
                 dcc.Graph(
@@ -144,12 +144,27 @@ def sort(logic):
                     figure=fig)
                 ])
             return app_box.layout
-    if logic[0].lower()=='line':
-        
 
-
-            
-
+        if logic[1].lower()=='comments':
+            d=data.get_data('comments')
+            traces = []
+            for items in d:
+                data_points=[]
+                for points in items[0]:
+                    data_points.append(points[1])
+                trace= go.Box(x=data_points, name=items[1])
+                traces.append(trace)
+            fig = go.Figure(data=traces)
+            app_box.layout = html.Div(children=[
+                html.H1(children='Youtube Analyzer'),
+                html.Div(children='''
+                    Comments: Box Plot comparison of Youtube Comment Senitment Analysis
+                '''),
+                dcc.Graph(
+                    id='example-graph',
+                    figure=fig)
+                ])
+            return app_box.layout
 
 
 

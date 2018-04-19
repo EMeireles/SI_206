@@ -1,5 +1,6 @@
 from requests_oauthlib import OAuth1Session
 import secrets
+import time
 import json
 import sqlite3
 import requests
@@ -56,11 +57,11 @@ def init_db(db_name):
     cur.execute(statement)
     conn.commit()
 
-    cur=conn.cursor()
-    statement = '''
-    DROP TABLE IF EXISTS 'Tweets';
-    '''
-    cur.execute(statement)
+    #cur=conn.cursor()
+    #statement = '''
+    #DROP TABLE IF EXISTS 'Tweets';
+    #'''
+    #cur.execute(statement)
 
     cur=conn.cursor()
     statement = '''
@@ -101,23 +102,23 @@ def init_db(db_name):
     create_cur.execute(statement)
     conn.commit()
 
-    statement= '''
-    CREATE TABLE "Tweets"(
-    'Id' INTEGER PRIMARY KEY AUTOINCREMENT,
-    'Tweet' INTEGER,
-    'Reference' INTEGER NOT NULL,
-    'YoutuberReferencedId' INTEGER NOT NULL,
-    'SentiScore' REAL NOT NULL,
-    FOREIGN KEY (YoutuberReferencedId) REFERENCES Youtubers(Id)
-    );
-     '''
-    create_cur.execute(statement)
-    conn.commit()
+    #statement= '''
+    #CREATE TABLE "Tweets"(
+    #'Id' INTEGER PRIMARY KEY AUTOINCREMENT,
+    #'Tweet' TEXT,
+    #'Reference' INTEGER NOT NULL,
+    #'YoutuberReferencedId' INTEGER NOT NULL,
+    #'SentiScore' REAL NOT NULL,
+    #FOREIGN KEY (YoutuberReferencedId) REFERENCES Youtubers(Id)
+    #);
+    # '''
+    #create_cur.execute(statement)
+    #conn.commit()
 
     statement= '''
     CREATE TABLE "Comments"(
     'Id' INTEGER PRIMARY KEY AUTOINCREMENT,
-    'Comment' INTEGER,
+    'Comment' TEXT,
     'Reference' INTEGER NOT NULL,
     'YoutuberReferencedId' INTEGER NOT NULL,
     'SentiScore' REAL NOT NULL,
@@ -170,32 +171,27 @@ def get_comments(query):
         'Accept':'application/json'
     }
     base_url='https://www.googleapis.com/youtube/v3/search'
-    params={'part':'snippet','q':query,'type':'video','key':YoutubeAPI,'maxResults':'25'}
+    params={'part':'snippet','q':query,'type':'video','key':YoutubeAPI,'maxResults':'10'}
     tube_data=cache(base_url,params)
     v_ids=[]
     for dic in tube_data['items']:
         v_ids.append(dic['id']['videoId'])
 
-    base_comments='https://www.googleapis.com/youtube/v3/commentThreads'
-    params_comments={'videoId':'Vgd9mAHjcuo','part':'snippet','key':YoutubeAPI,'maxResults':'100'}
-    comment_data=cache(base_comments,params_comments)
-    print('Check1')
-
     text_list=[]
-    for dic in comment_data['items']:
-        text_list.append(dic['snippet']['topLevelComment']['snippet']['textDisplay'])
-    print('check2')
+    base_comments='https://www.googleapis.com/youtube/v3/commentThreads'
+    for vIDs in v_ids:
+        params_comments={'videoId':vIDs,'part':'snippet','key':YoutubeAPI,'maxResults':'5'}
+        comment_data=cache(base_comments,params_comments)
+        for dic in comment_data['items']:
+            text_list.append(dic['snippet']['topLevelComment']['snippet']['textDisplay'])
+    
 
     text_obj=[]
-
     for comment in text_list:
         documents= {'documents' : [ {'id': '1', 'language': 'en', 'text':comment}]}
         data_Azure=requests.post(base_Azure,headers=headers_Azure,json=documents)
         rating_data=json.loads(data_Azure.text)
-        try:
-            rating=rating_data['documents'][0]['score']
-        except:
-            print(rating_data)
+        rating=rating_data['documents'][0]['score']
         text_obj.append((comment,rating))
     return text_obj
 
@@ -278,8 +274,6 @@ def get_tweets(search_term):
     f_text=filter_tweets(text)
     return (f_text,search_term)
 
-
-
 def pop_table(channels):
     conn = sqlite3.connect(db_name)
     cur=conn.cursor()
@@ -327,18 +321,23 @@ def pop_table(channels):
         print(youtuber[1][-1])
         comments=get_comments(youtuber[1][-1])
         comment_list.append((comments,youtuber[1][-1]))
+        print("Cooling Down...")
+        time.sleep(50)
+    
 
-    #for comments in comment_list:
-    #    for comment in comments:
-    #        statement='''
-    #        SELECT Id FROM Youtubers WHERE Youtubers.Youtuber= ''' +"'{}'".format(obj[1])
-    #        id_cur.execute(statement)
-    #        Y_id=id_cur.fetchone()[0]
-    #        insertion=(None,comment[0],comments[1],Y_id,comment[1])
-    #        statement = 'INSERT INTO "Comments" '
-    #        statement += 'VALUES (?, ?, ?, ?, ?)'
-    #        cur.execute(statement,insertion)
-    #        conn.commit()
+    print("Filling Db...")
+    for comments in comment_list:
+        for comment in comments[0]:
+            id_cur=conn.cursor()
+            statement='''
+            SELECT Id FROM Youtubers WHERE Youtubers.Youtuber= ''' +"'{}'".format(comments[1])
+            id_cur.execute(statement)
+            Y_id=id_cur.fetchone()[0]
+            insertion=(None,comment[0],comments[1],Y_id,comment[1])
+            statement = 'INSERT INTO "Comments" '
+            statement += 'VALUES (?, ?, ?, ?, ?)'
+            cur.execute(statement,insertion)
+            conn.commit()
 
 
 
@@ -390,12 +389,18 @@ def get_data(spec):
             data_t=cur.fetchall()
             data.append((data_t,yt[0]))
         return data
-
-
-
-
-#yts=['nigahiga','Zerkaa','seananners']
-#init_db(db_name)
-#pop_table(yts)
-
-
+    elif spec=='comments':
+        statement='''
+        SELECT DISTINCT Reference FROM Comments
+        '''
+        cur.execute(statement)
+        lis=cur.fetchall()
+        data=[]
+        for yt in lis:
+            statement='''
+            SELECT Comment,SentiScore FROM Comments WHERE Reference=
+            '''+"'{}'".format(yt[0])
+            cur.execute(statement)
+            data_t=cur.fetchall()
+            data.append((data_t,yt[0]))
+        return data
