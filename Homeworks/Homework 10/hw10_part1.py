@@ -4,7 +4,7 @@ import sys
 import sqlite3
 from secrets import *
 
-DB_NAME = 'tweets.sqlite'
+DB_NAME = 'tweets.db'
 
 def get_tweets(search_term, num_tweets):
     auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
@@ -22,7 +22,7 @@ def check_table_exists(db,table):
     for tbl in cur:
         tables.append(tbl[0])
 
-    if tables[0]=='Tweets':
+    if len(tables)!=0:
         return True
     else:
         return False
@@ -103,7 +103,7 @@ def insert_tweet_data(tweets):
             empty="No Location"
         else:
             empty=tweet.user.location
-        insertion = (tweet.id, tweet.text.encode('utf8'), tweet.retweet_count, tweet.user.id,tweet.user.screen_name,empty,tweet.user.followers_count)
+        insertion = (tweet.id, tweet.text, tweet.retweet_count, tweet.user.id,tweet.user.screen_name,empty,tweet.user.followers_count)
         statement = 'INSERT INTO "Tweets" '
         statement += 'VALUES (?, ?, ?, ?, ?, ?, ?)'
         cur.execute(statement, insertion)

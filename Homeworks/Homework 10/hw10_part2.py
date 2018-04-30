@@ -1,6 +1,6 @@
 import sqlite3
 
-DB_NAME = 'tweets.sqlite'
+DB_NAME = 'tweets.db'
 
 try:
     conn = sqlite3.connect(DB_NAME)
